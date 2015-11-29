@@ -28,17 +28,23 @@ def handler(clientsocket, clientaddr):
                     if pid < 0:
                         raise Exception("fork failed")
                     elif 0 == pid:
-                        print("Inside child process\n")
-                        print("Command output\n")
-                        execvp(cmd[0],cmd)
-                        print("Exec failed\n")
-                        exit(1)
+                        try:
+                            print("Inside child process\n")
+                            print("Command output\n")
+                            execvp(cmd[0],cmd)
+                            print("Exec failed\n")
+                            exit(1)
+                        except Exception as e:
+                            print("child process exception: ",e)
                     else:
-                        x = waitpid(pid, status)
-                        if x < 0:
-                            print("Child error")
-                        else:
-                            print("Child executed successfully")
+                        try:
+                            x, stat = waitpid(pid, status)
+                            if x < 0:
+                                print("Child error")
+                            else:
+                                print("Child executed successfully")
+                        except Exception as e:
+                            print("Parent process exception: ",e)
                     clientsocket.send("Command executed".encode('ascii'))
                 except Exception as e:
                     print("Failed to parse command: ",e)
