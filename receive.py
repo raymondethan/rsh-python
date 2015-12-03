@@ -53,7 +53,8 @@ def handler(clientsocket, clientaddr):
                 print("Handler exception: ",e)
     clientsocket.close()
 
-#Do I need this method if I am only accepting one connection at once!!!
+#I need this method if I want to be able to accept multiple senders at once
+#Is this the behavior that RSH should implement?
 def receive():
     port = 55567
     buf = 1024
