@@ -1,53 +1,52 @@
 from socket import *
 import os.path, time
 import threading
+from getpass import getpass
 
-def send(*args):
-    ip = "".join(args)
-    print(ip)
-    #last_modified = None
+#Not sure if it makes sense to have an init file in the sender method - it would mean you
+#can only connect to the rsh from a specific directory, which isn't very similar to how ssh works
+
+def send(ip):
+    
+    # Hard coded these values into this file so that the init.ini file doesn't need to
+    # be in the same folder as send.py
     port = 55567
     buf = 1024
-
-    #while True:
-    # try:
-    #     modified = time.ctime(os.stat(filename).st_mtime)
-    # except Exception:
-    #     continue
-    #If file is modified, sends contents of file to all servers in list of IP addresses
-    #if (not last_modified or last_modified < modified):
-        # last_modified = modified
-        # data = readfile(filename)
-        #for ip in IPS:
-    login = input(">>> Password: ")
-    cmd = str(login)
-    print("Command: " + cmd)
+    login = getpass(">>> Password: ")
+    cmd = str("_login " + login)
     addr = (ip, port)
-    while 'exit' != cmd:
+    exit = False
+    loggedIn = False
+    while not exit:
         try:
+            if 'exit' == cmd:
+                exit = True
+            #Create a socket that operates on TCP protocol
             clientsocket = socket(AF_INET, SOCK_STREAM)
             clientsocket.connect(addr)
-            #socket module only accepts data in bytes
+            #socket module only accepts data in bytes, so "encode('ascii')" is necessary
             clientsocket.send(cmd.encode('ascii'))
-            response = clientsocket.recv(1024).decode('ascii')
-            if response:
-                print(response)
+            #If the user did not quit send, wait for the command response from the server
+            if not exit:
+                response = clientsocket.recv(buf).decode('ascii')
+                if response:
+                    if "fail" in response and not loggedIn:
+                        loggedIn = False
+                    else:
+                        loggedIn = True
+                if 'Command Executed' != response:
+                    print(response)
             clientsocket.close()
         except Exception as e:
             print("Send exception: ",e)
-        cmd = input(">>> ")
-
-
-def main():
-    print("RSH\n")
-    ip = input("RSH Address: ")
-    #send login info
-    #if response is positive
-    #while loop until exit is typed
-    sender = threading.Thread(target=send,name="Sender",args=(ip))
-    #receiver = threading.Thread(target=receive,name="Receiver")
-    #receiver.start()
-    sender.start()
+        if not exit:
+            if not loggedIn:
+                cmd = getpass(">>> Password: ")
+                cmd = "_login "+cmd
+            else:
+                cmd = input(">>> ")
 
 if __name__ == "__main__":
-    main()
+    print("RSH\n")
+    ip = input("RSH Address: ")
+    send(ip)
